@@ -1,0 +1,280 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\imgui">
+      <UniqueIdentifier>{905544c2-dd40-453a-aa85-98798800204e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\imgui">
+      <UniqueIdentifier>{115ff62d-15a7-432d-9fd9-9556eb9a08ed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\textures">
+      <UniqueIdentifier>{0befb3cc-1510-4fcb-b25b-89f8a50f7d68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\textures\skybox">
+      <UniqueIdentifier>{91abbc50-6149-48c9-99f8-1eabec57f072}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\textures\pbr">
+      <UniqueIdentifier>{4253af20-b74f-4e60-a73c-ca51fd70f71b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\textures\pbr\wall">
+      <UniqueIdentifier>{c1cad12f-a37e-4188-a0c0-6985d7228955}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\shaders">
+      <UniqueIdentifier>{8528fa32-cfde-4b82-aea3-370063698794}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\DownloadsD\glad\glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_glfw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imgui.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imgui_demo.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imgui_draw.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imgui_tables.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imgui_widgets.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_opengl3.cpp">
+      <Filter>Source Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Block.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Chunk.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imconfig.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imgui.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_glfw.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_opengl3.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imgui_internal.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imstb_rectpack.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imstb_textedit.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imstb_truetype.h">
+      <Filter>Header Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Block.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Chunk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\textures\awesomeface.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\background.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\block.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\block_solid.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\bricks2.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\bricks2_disp.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\bricks2_normal.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\brickwall.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\brickwall_normal.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\concreteTexture.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\container.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\container2.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\container2_specular.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\container2_specular_colored.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\grass.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\marble.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\matrix.jpg">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\metal.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\paddle.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\particle.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\powerup_chaos.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\powerup_confuse.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\powerup_increase.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\powerup_passthrough.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\powerup_speed.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\powerup_sticky.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\toy_box_diffuse.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\toy_box_disp.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\toy_box_normal.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\window.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\wood.png">
+      <Filter>Resource Files\textures</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\back.jpg">
+      <Filter>Resource Files\textures\skybox</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\bottom.jpg">
+      <Filter>Resource Files\textures\skybox</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\front.jpg">
+      <Filter>Resource Files\textures\skybox</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\left.jpg">
+      <Filter>Resource Files\textures\skybox</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\right.jpg">
+      <Filter>Resource Files\textures\skybox</Filter>
+    </Image>
+    <Image Include="resources\textures\skybox\top.jpg">
+      <Filter>Resource Files\textures\skybox</Filter>
+    </Image>
+    <Image Include="resources\textures\pbr\wall\albedo.png">
+      <Filter>Resource Files\textures\pbr\wall</Filter>
+    </Image>
+    <Image Include="resources\textures\pbr\wall\ao.png">
+      <Filter>Resource Files\textures\pbr\wall</Filter>
+    </Image>
+    <Image Include="resources\textures\pbr\wall\metallic.png">
+      <Filter>Resource Files\textures\pbr\wall</Filter>
+    </Image>
+    <Image Include="resources\textures\pbr\wall\normal.png">
+      <Filter>Resource Files\textures\pbr\wall</Filter>
+    </Image>
+    <Image Include="resources\textures\pbr\wall\roughness.png">
+      <Filter>Resource Files\textures\pbr\wall</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="basicFrag.glsl">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="lightCubeFrag.glsl">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="fragmentShader.glsl">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="vertexShader.glsl">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="modelVertex.glsl">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>
