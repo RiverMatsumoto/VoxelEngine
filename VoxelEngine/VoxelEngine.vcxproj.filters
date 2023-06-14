@@ -84,6 +84,9 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ChunkManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imconfig.h">
@@ -129,6 +132,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ShaderData.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ChunkManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

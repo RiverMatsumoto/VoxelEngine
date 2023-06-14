@@ -58,6 +58,11 @@ uniform SpotLight spotLight;
 vec3 DirectionalLightCalculations(DirLight light, vec3 normal, vec3 viewDir);
 vec3 PointLightCalculations(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 SpotLightCalculations(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
+float LinearizeDepth(float depth);
+
+// depth buffer stuff
+float near = 0.1;
+float far = 100.0;
 
 void main()
 {
@@ -69,13 +74,15 @@ void main()
     result = DirectionalLightCalculations(dirLight, norm, viewDir);
 
     // point lights
-    for (int i = 0; i < NUM_POINT_LIGHTS; i++)
-        result += PointLightCalculations(pointLights[i], norm, FragPos, viewDir);
+    //for (int i = 0; i < NUM_POINT_LIGHTS; i++)
+        //result += PointLightCalculations(pointLights[i], norm, FragPos, viewDir);
 
     // spot lights
-    // result += SpotLightCalculations(spotLight, norm, FragPos, viewDir);
+    //result += SpotLightCalculations(spotLight, norm, FragPos, viewDir);
 
     FragColor = vec4(result, 1.0);
+    // float depth = LinearizeDepth(gl_FragCoord.z) / far;
+    // FragColor = vec4(vec3(depth), 1.0); // range: [black, white]
 }
 
 vec3 DirectionalLightCalculations(DirLight light, vec3 normal, vec3 viewDir)
@@ -149,4 +156,10 @@ vec3 SpotLightCalculations(SpotLight light, vec3 normal, vec3 fragPos, vec3 view
     diffuse *= attenuation;
     specular *= attenuation;
     return (ambient + diffuse + specular);
+}
+
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1; // back to NDC (idk what ndc is)
+    return (2.0 * near * far) / (far + near - z * (far - near)); 
 }

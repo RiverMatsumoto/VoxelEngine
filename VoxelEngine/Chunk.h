@@ -27,7 +27,7 @@ public:
 private:
 	Block*** m_pBlocks;
 	unsigned int m_pNumVertices;
-	void CreateCube(glm::vec3 position, std::vector<Vertex>& vertices);
+	void CreateCube(glm::ivec3& position, std::vector<Vertex>& vertices);
 
 };
 

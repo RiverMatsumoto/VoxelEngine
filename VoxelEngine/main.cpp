@@ -17,6 +17,7 @@
 #include <iostream>
 #include <vector>
 #include "Chunk.h"
+#include <PerlinNoise.hpp>
 
 // big fat annoying blocks of code that I don't care about
 void setup_window(GLFWwindow *&window, unsigned int width, unsigned int height);
@@ -40,6 +41,7 @@ void mouse_btn_callback(GLFWwindow *window, int button, int action, int mods);
 // util
 void updateDeltaTime();
 
+
 //Mesh createMesh();
 
 Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
@@ -62,8 +64,8 @@ bool useWireframe = false;
 unsigned int textures[3];
 const char *paths[3] = {
         "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//container2.png",
-        "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//container2_specular.png"
-        "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//brickwall.jpg"
+        "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//container2_specular.png",
+        "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//brickwall.jpg",
 };
 
 int main()
@@ -91,14 +93,27 @@ int main()
     //Shader basicShader = Shader(modelVertexPath, basicFragPath);
     //Model backpack(backpackPath);
 
+    const siv::PerlinNoise::seed_type seed = 69u;
+    const siv::PerlinNoise perlin{ seed };
+    for (int y = 0; y < 5; ++y)
+    {
+        for (int x = 0; x < 5; ++x)
+        {
+            const double noise = perlin.octave2D_11(x, y, 4);
+
+            std::cout << noise << '\t';
+        }
+
+        std::cout << '\n';
+    }
 
     registerTextures(textures, paths, 3);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, textures[1]);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, textures[2]);
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, textures[0]);
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_2D, textures[1]);
+    //glActiveTexture(GL_TEXTURE2);
+    //glBindTexture(GL_TEXTURE_2D, textures[2]);
 
     glm::vec3 cubePos(0.0f);
 
@@ -130,10 +145,14 @@ int main()
     Chunk chunk;
     chunk.CreateMesh();
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_STENCIL_TEST);
 
     while (!glfwWindowShouldClose(window))
     {
         // input
+        glfwPollEvents();
         updateDeltaTime();
         processInput(window);
 
@@ -151,14 +170,17 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float) screenWidth / (float) screenHeight,
                                                 0.1f, 100.0f);
+        // translate camera.position - model
+        projection = projection * glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
+                                0.0f, -1.0f, 0.0f, 0.0f,
+                                0.0f, 0.0f, 1.0f, 0.0f,
+                                0.0f, 0.0f, 0.0f, 1.0f);
 
         shader.use();
+        shader.setInt("material.texture_diffuse1", 0);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
         shader.setMat4("model", model);
-        shader.setInt("material.texture_diffuse1", 0);
-        glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textures[0]);
         chunk.Render(shader);
         //myMesh.Draw(shader);
 
@@ -207,7 +229,6 @@ int main()
         // more imgui stuff
         ImGuiRenderLoop();
 
-        glfwPollEvents();
         glfwSwapBuffers(window);
     }
 
@@ -307,9 +328,11 @@ void generateCube(unsigned int VBO[], unsigned int VAO[], unsigned int EBO[])
 void registerTextures(unsigned int texture[], const char *paths[], int nTextures)
 {
     // ideas: use imgui to edit the texture settings such as: flipping texture, rgba setting, and other render settings
+    unsigned int activeTexture = 0;
     glGenTextures(nTextures, texture);
     for (int i = 0; i < nTextures; i++)
     {
+        glActiveTexture(GL_TEXTURE0 + i);
         std::filesystem::path filePath = paths[i];
         if (filePath.extension() == ".jpg")
         {

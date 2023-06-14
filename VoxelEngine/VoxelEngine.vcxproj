@@ -71,8 +71,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\DownloadsD\glfw-3.3.8\include;D:\DownloadsD\glad\include;D:\DownloadsD\glad\include\KHR;D:\DownloadsD\glm-0.9.9.8\glm;C:\Users\river\assimp\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Opengl\lib;C:\Users\river\assimp\lib\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\DownloadsD\glfw-3.3.8\include;D:\DownloadsD\glad\include;D:\DownloadsD\glad\include\KHR;D:\DownloadsD\glm-0.9.9.8\glm;C:\Users\river\assimp\include;C:\Users\river\lib\PerlinNoise-3.0.0\PerlinNoise-3.0.0;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Opengl\lib;C:\Users\river\assimp\lib\Debug;C:\Users\river\lib\libnoisedll-1.0.0\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>D:\DownloadsD\glfw-3.3.8\include;D:\DownloadsD\glad\include;D:\DownloadsD\glad\include\KHR;D:\DownloadsD\glm-0.9.9.8\glm;C:\Users\river\assimp\include;$(IncludePath)</IncludePath>
@@ -120,7 +120,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;assimp-vc143-mtd.lib;libnoise.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -146,6 +146,7 @@
   <ItemGroup>
     <ClCompile Include="Block.cpp" />
     <ClCompile Include="Chunk.cpp" />
+    <ClCompile Include="ChunkManager.cpp" />
     <ClCompile Include="D:\DownloadsD\glad\glad.c" />
     <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_opengl3.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="Block.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Chunk.h" />
+    <ClInclude Include="ChunkManager.h" />
     <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_glfw.h" />
     <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="D:\Programming\imgui-1.89.6\imgui-1.89.6\imconfig.h" />
