@@ -59,30 +59,44 @@ vec3 DirectionalLightCalculations(DirLight light, vec3 normal, vec3 viewDir);
 vec3 PointLightCalculations(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 vec3 SpotLightCalculations(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);
 float LinearizeDepth(float depth);
+bool isWithinClipSpace();
 
 // depth buffer stuff
 float near = 0.1;
 float far = 100.0;
+
+uniform bool useDebugCam;
+uniform bool usePointLights;
+uniform bool useDirectionalLight;
+uniform bool useSpotLight;
+
+uniform vec4 debugColor;
+uniform vec4 normalCamColor;
+uniform int camView;
+in vec4 debugClipPosition;
+in vec3 vertexPos;
 
 void main()
 {
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    // directional light
     vec3 result = vec3(0.0);
-    result = DirectionalLightCalculations(dirLight, norm, viewDir);
+    if (useDirectionalLight)
+        result = DirectionalLightCalculations(dirLight, norm, viewDir);
 
-    // point lights
-    //for (int i = 0; i < NUM_POINT_LIGHTS; i++)
-        //result += PointLightCalculations(pointLights[i], norm, FragPos, viewDir);
+    if (usePointLights)
+        for (int i = 0; i < NUM_POINT_LIGHTS; i++)
+            result += PointLightCalculations(pointLights[i], norm, FragPos, viewDir);
 
-    // spot lights
-    //result += SpotLightCalculations(spotLight, norm, FragPos, viewDir);
+    if (useSpotLight)
+        result += SpotLightCalculations(spotLight, norm, FragPos, viewDir);
 
     FragColor = vec4(result, 1.0);
-    // float depth = LinearizeDepth(gl_FragCoord.z) / far;
-    // FragColor = vec4(vec3(depth), 1.0); // range: [black, white]
+
+    if (!useDebugCam) return;
+    if (isWithinClipSpace())
+		FragColor = debugColor;
 }
 
 vec3 DirectionalLightCalculations(DirLight light, vec3 normal, vec3 viewDir)
@@ -162,4 +176,14 @@ float LinearizeDepth(float depth)
 {
     float z = depth * 2.0 - 1; // back to NDC (idk what ndc is)
     return (2.0 * near * far) / (far + near - z * (far - near)); 
+}
+
+bool isWithinClipSpace()
+{
+    return (debugClipPosition.x >= -debugClipPosition.w && debugClipPosition.x <= debugClipPosition.w && 
+            debugClipPosition.y >= -debugClipPosition.w && debugClipPosition.y <= debugClipPosition.w &&
+            debugClipPosition.z >= -debugClipPosition.w && debugClipPosition.z <= debugClipPosition.w &&
+            debugClipPosition.z >= -debugClipPosition.w * 0.1 && 
+            debugClipPosition.z <= debugClipPosition.w * 100.0);
+
 }

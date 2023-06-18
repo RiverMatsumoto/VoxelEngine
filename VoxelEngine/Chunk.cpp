@@ -2,24 +2,59 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <PerlinNoise.hpp>
 
 const float Block::BLOCK_RENDER_SIZE = 1.0f;
 
-Chunk::Chunk()
+Chunk::Chunk(glm::ivec2& position)
 { 
 	m_meshVAO = 0;
 	m_meshVBO = 0;
 	m_pNumVertices = 0;
+	m_position = position;
 
-	m_pBlocks = new Block * *[CHUNK_SIZE];
-	for (int i = 0; i < CHUNK_SIZE; i++)
+	m_blocks = new Block[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
+	for (int x = 0; x < CHUNK_SIZE; x++)
 	{
-		m_pBlocks[i] = new Block * [CHUNK_SIZE];
-		for (int j = 0; j < CHUNK_SIZE; j++)
+		for (int y = 0; y < CHUNK_SIZE; y++)
 		{
-			m_pBlocks[i][j] = new Block[CHUNK_SIZE];
+			for (int z = 0; z < CHUNK_SIZE; z++)
+			{
+				GetBlock(x,y,z).SetActive(true);
+			}
 		}
 	}
+}
+
+Chunk::Chunk(int xPos, int yPos)
+{ 
+	m_meshVAO = 0;
+	m_meshVBO = 0;
+	m_pNumVertices = 0;
+	m_position = glm::ivec2(xPos, yPos);
+
+	m_blocks = new Block[CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE];
+	for (int x = 0; x < CHUNK_SIZE; x++)
+	{
+		for (int y = 0; y < CHUNK_SIZE; y++)
+		{
+			for (int z = 0; z < CHUNK_SIZE; z++)
+			{
+				GetBlock(x, y, z).SetActive(true);
+			}
+		}
+	}
+
+	GetBlock(4,3,8).SetActive(false);
+	GetBlock(0,2,3).SetActive(false);
+}
+
+Chunk::Chunk(const Chunk& chunk)
+{
+	m_meshVAO = chunk.m_meshVAO;
+	m_meshVBO = chunk.m_meshVBO;
+	m_pNumVertices = chunk.m_pNumVertices;
+	m_position = chunk.m_position;
 
 	for (int x = 0; x < CHUNK_SIZE; x++)
 	{
@@ -27,31 +62,40 @@ Chunk::Chunk()
 		{
 			for (int z = 0; z < CHUNK_SIZE; z++)
 			{
-				m_pBlocks[x][y][z].SetActive(true);
+				GetBlock(x, y, z) = chunk.GetBlock(x,y,z);
+				GetBlock(x, y, z).SetActive(true);
 			}
 		}
 	}
-
-	m_pBlocks[4][3][8].SetActive(false);
 }
 
 Chunk::~Chunk()
 {
-	for (int i = 0; i < CHUNK_SIZE; i++)
-	{
-		for (int j = 0; j < CHUNK_SIZE; j++)
-		{
-			delete[] m_pBlocks[i][j];
-		}
-		delete[] m_pBlocks[i];
-	}
-	delete[] m_pBlocks;
+	delete[] m_blocks;
 }
 
 void Chunk::CreateMesh()
 {
 	// generate data for mesh
+    const siv::PerlinNoise::seed_type seed = 69u;
+    const siv::PerlinNoise perlin{ seed };
+    for (int x = 0; x < CHUNK_SIZE; x++)
+    {
+        for (int z = 0; z < CHUNK_SIZE; z++)
+        {
+			int blockPosX = x + (m_position.x * CHUNK_SIZE);
+			int blockPosZ = z + (m_position.y * CHUNK_SIZE); // y because 2d map coords
+            double maxHeight = perlin.octave2D_01((blockPosX * 0.02), (blockPosZ * 0.02), 4);
+			maxHeight *= CHUNK_SIZE; // Temporarily just chunk size, but can implement chunk height
+
+			for (int y = maxHeight; y < CHUNK_SIZE; y++)
+			{ 
+				GetBlock(x, y, z).SetActive(false);
+			}
+        }
+    }
 	std::vector<Vertex> vertices;
+	std::vector<unsigned int> indices;
 	glm::ivec3 blockPos;
 	for (int x = 0; x < CHUNK_SIZE; x++)
 	{
@@ -63,7 +107,7 @@ void Chunk::CreateMesh()
 			{
 				blockPos.z = z;
 
-				if (!m_pBlocks[x][y][z].IsActive())
+				if (!GetBlock(x,y,z).IsActive())
 					continue;
 				CreateCube(blockPos,  vertices);
 			}
@@ -96,8 +140,28 @@ void Chunk::CreateMesh()
 	glBindVertexArray(0);
 }
 
-void Chunk::Update(float dt)
+void Chunk::AddBlock(glm::ivec3 pos)
 {
+	GetBlock(pos.x, pos.y, pos.z).SetActive(true);
+	CreateMesh();
+}
+
+void Chunk::AddBlock(int x, int y, int z)
+{
+	GetBlock(x,y,z).SetActive(true);
+	CreateMesh();
+}
+
+void Chunk::RemoveBlock(glm::ivec3 pos)
+{
+	GetBlock(pos.x, pos.y, pos.z).SetActive(false);
+	CreateMesh();
+}
+
+void Chunk::RemoveBlock(int x, int y, int z)
+{
+	GetBlock(x,y,z).SetActive(false);
+	CreateMesh();
 }
 
 void Chunk::Render(Shader& shader)
@@ -109,20 +173,49 @@ void Chunk::Render(Shader& shader)
 	glDrawArrays(GL_TRIANGLES, 0, m_pNumVertices); // 6 vertices per face * 6 faces = 36
 }
 
+Block& Chunk::GetBlock(int x, int y, int z) const
+{
+	return m_blocks[z + (CHUNK_SIZE * (y + CHUNK_SIZE * x))];
+}
+
 void Chunk::CreateCube(glm::ivec3& pos, std::vector<Vertex>& vertices)
 {
 	// y are negative because opengl y axis is opposite way
 	std::vector<glm::vec3> vertexPositions;
 	// anchored from bottom left, position of 1 cube = chunk coordinates + block coordinates
-	// vertex positions
-	vertexPositions.push_back(glm::vec3(pos.x,								pos.y,								pos.z)); 
-	vertexPositions.push_back(glm::vec3(pos.x + Block::BLOCK_RENDER_SIZE,	pos.y,								pos.z));
-	vertexPositions.push_back(glm::vec3(pos.x + Block::BLOCK_RENDER_SIZE,	pos.y + Block::BLOCK_RENDER_SIZE,	pos.z));
-	vertexPositions.push_back(glm::vec3(pos.x,								pos.y + Block::BLOCK_RENDER_SIZE,	pos.z));
-	vertexPositions.push_back(glm::vec3(pos.x,								pos.y,								pos.z + Block::BLOCK_RENDER_SIZE));
-	vertexPositions.push_back(glm::vec3(pos.x + Block::BLOCK_RENDER_SIZE,	pos.y,								pos.z + Block::BLOCK_RENDER_SIZE));
-	vertexPositions.push_back(glm::vec3(pos.x + Block::BLOCK_RENDER_SIZE,	pos.y + Block::BLOCK_RENDER_SIZE,	pos.z + Block::BLOCK_RENDER_SIZE));
-	vertexPositions.push_back(glm::vec3(pos.x,								pos.y + Block::BLOCK_RENDER_SIZE,	pos.z + Block::BLOCK_RENDER_SIZE));
+	// vertex positions: formula chunkPosition + chunk offset + block size
+	vertexPositions.push_back(glm::vec3(
+		pos.x + CHUNK_SIZE * m_position.x,
+		pos.y,	
+		pos.z + CHUNK_SIZE * m_position.y)); 
+	vertexPositions.push_back(glm::vec3(
+		pos.x + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.x,	
+		pos.y,	
+		pos.z + CHUNK_SIZE * m_position.y));
+	vertexPositions.push_back(glm::vec3(
+		pos.x + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.x,
+		pos.y + Block::BLOCK_RENDER_SIZE,
+		pos.z + CHUNK_SIZE * m_position.y));
+	vertexPositions.push_back(glm::vec3(
+		pos.x + CHUNK_SIZE * m_position.x,
+		pos.y + Block::BLOCK_RENDER_SIZE,
+		pos.z + CHUNK_SIZE * m_position.y));
+	vertexPositions.push_back(glm::vec3(
+		pos.x + CHUNK_SIZE * m_position.x,
+		pos.y,
+		pos.z + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.y));
+	vertexPositions.push_back(glm::vec3(
+		pos.x + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.x,
+		pos.y,
+		pos.z + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.y));
+	vertexPositions.push_back(glm::vec3(
+		pos.x + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.x,
+		pos.y + Block::BLOCK_RENDER_SIZE,
+		pos.z + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.y));
+	vertexPositions.push_back(glm::vec3(
+		pos.x + CHUNK_SIZE * m_position.x, 
+		pos.y + Block::BLOCK_RENDER_SIZE,
+		pos.z + Block::BLOCK_RENDER_SIZE + CHUNK_SIZE * m_position.y));
 
 	
 	// face normals
@@ -150,17 +243,17 @@ void Chunk::CreateCube(glm::ivec3& pos, std::vector<Vertex>& vertices)
 	bool zPosActive = false;
 	bool zNegActive = false;
 	if (pos.x + 1 < CHUNK_SIZE)
-		xPosActive = m_pBlocks[pos.x + 1][pos.y][pos.z].IsActive();
+		xPosActive = GetBlock(pos.x + 1, pos.y, pos.z).IsActive();
 	if (pos.x - 1 >= 0)
-		xNegActive = m_pBlocks[pos.x - 1][pos.y][pos.z].IsActive();
+		xNegActive = GetBlock(pos.x - 1 ,pos.y, pos.z).IsActive();
 	if (pos.y + 1 < CHUNK_SIZE)
-		yPosActive = m_pBlocks[pos.x][pos.y + 1][pos.z].IsActive();
+		yPosActive = GetBlock(pos.x, pos.y + 1,  pos.z).IsActive();
 	if (pos.y - 1 >= 0)
-		yNegActive = m_pBlocks[pos.x][pos.y - 1][pos.z].IsActive();
+		yNegActive = GetBlock(pos.x, pos.y - 1, pos.z).IsActive();
 	if (pos.z + 1 < CHUNK_SIZE)
-		zPosActive = m_pBlocks[pos.x][pos.y][pos.z + 1].IsActive();
+		zPosActive = GetBlock(pos.x, pos.y, pos.z + 1).IsActive();
 	if (pos.z - 1 >= 0)
-		zNegActive = m_pBlocks[pos.x][pos.y][pos.z - 1].IsActive();
+		zNegActive = GetBlock(pos.x, pos.y, pos.z - 1).IsActive();
 
 	/*
 				indices visual
@@ -174,7 +267,6 @@ void Chunk::CreateCube(glm::ivec3& pos, std::vector<Vertex>& vertices)
 				back
 	*/
 
-	// back face
 	if (!zPosActive)
 	{
 		vertices.push_back(Vertex{ vertexPositions[6], normForward, texTopLeft });

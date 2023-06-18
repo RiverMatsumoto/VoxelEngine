@@ -18,11 +18,13 @@ public:
 	static const float BLOCK_RENDER_SIZE;
 
 	Block();
+	Block(const Block& block);
 	~Block();
 	bool IsActive();
 	void SetActive(bool active);
+	BlockType GetBlockType();
+	void SetBlockType(BlockType blockType);
 private:
-	bool m_active;
-	BlockType m_blockType;
+	unsigned char data;
 };
 

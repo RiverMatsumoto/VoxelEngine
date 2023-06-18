@@ -11,12 +11,13 @@
 #include "stb_image.h"
 #include "Camera.h"
 #include "ShaderData.h"
-//#include "Model.h"
+#include "Model.h"
 
 #include <filesystem>
 #include <iostream>
 #include <vector>
 #include "Chunk.h"
+#include "ChunkManager.h"
 #include <PerlinNoise.hpp>
 
 // big fat annoying blocks of code that I don't care about
@@ -41,10 +42,9 @@ void mouse_btn_callback(GLFWwindow *window, int button, int action, int mods);
 // util
 void updateDeltaTime();
 
-
 //Mesh createMesh();
 
-Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 
 unsigned int screenWidth = 1600;
 unsigned int screenHeight = 1200;
@@ -58,15 +58,28 @@ ShaderData shaderData;
 Shader *shaderPtr;
 
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+int debugBlockPos[3];
 
 bool useWireframe = false;
 
 unsigned int textures[3];
 const char *paths[3] = {
-        "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//container2.png",
+        "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//grass_minecraft.png",
         "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//container2_specular.png",
         "C://Users//river//source//repos//VoxelEngine//VoxelEngine//resources//textures//brickwall.jpg",
 };
+
+struct CameraData
+{
+    glm::vec3 position;
+    glm::vec3 front;
+    glm::vec3 worldUp;
+    float zoom;
+};
+
+CameraData camData;
+bool useDebugCam = false;
+ChunkManager chunkManager;
 
 int main()
 {
@@ -85,6 +98,7 @@ int main()
     // shaders
     lightSourceShader.use();
     lightSourceShader.setVec3("lightColor", glm::vec3(1.0f));
+    shaderData.dirLightDirection = glm::vec3(-0.1f, -0.2f, 0.0f);
 
     // importing models
     //const char* modelVertexPath = "C:/Users/river/source/repos/VoxelEngine/VoxelEngine/modelVertex.glsl";
@@ -92,20 +106,6 @@ int main()
     //const char *backpackPath = "C:/Users/river/source/repos/VoxelEngine/VoxelEngine/resources/objects/backpack/backpack.obj";
     //Shader basicShader = Shader(modelVertexPath, basicFragPath);
     //Model backpack(backpackPath);
-
-    const siv::PerlinNoise::seed_type seed = 69u;
-    const siv::PerlinNoise perlin{ seed };
-    for (int y = 0; y < 5; ++y)
-    {
-        for (int x = 0; x < 5; ++x)
-        {
-            const double noise = perlin.octave2D_11(x, y, 4);
-
-            std::cout << noise << '\t';
-        }
-
-        std::cout << '\n';
-    }
 
     registerTextures(textures, paths, 3);
     //glActiveTexture(GL_TEXTURE0);
@@ -142,12 +142,17 @@ int main()
     };
     
     //Mesh myMesh = createMesh();
-    Chunk chunk;
-    chunk.CreateMesh();
+    chunkManager.BuildAllChunks();
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_EQUAL, 1, 0x50);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+	//std::string squirrelPath("C:/Users/river/source/repos/VoxelEngine/VoxelEngine/resources/objects/squirrel/Squirrel_OBJ.obj");
+	//Model squirrel(squirrelPath);
+    
 
     while (!glfwWindowShouldClose(window))
     {
@@ -161,10 +166,7 @@ int main()
 
         // Clear buffers, set background color
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        // rendering
-        setShaderData(shader);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         glm::mat4 model = glm::mat4(1.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -172,18 +174,28 @@ int main()
                                                 0.1f, 100.0f);
         // translate camera.position - model
         projection = projection * glm::mat4(1.0f, 0.0f, 0.0f, 0.0f,
-                                0.0f, -1.0f, 0.0f, 0.0f,
-                                0.0f, 0.0f, 1.0f, 0.0f,
-                                0.0f, 0.0f, 0.0f, 1.0f);
+                                        0.0f, -1.0f, 0.0f, 0.0f,
+                                        0.0f, 0.0f, 1.0f, 0.0f,
+                                        0.0f, 0.0f, 0.0f, 1.0f);
 
+
+        // rendering
         shader.use();
         shader.setInt("material.texture_diffuse1", 0);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
         shader.setMat4("model", model);
-        chunk.Render(shader);
-        //myMesh.Draw(shader);
+        setShaderData(shader);
 
+		glm::mat4 debugView = glm::lookAt(camData.position, camData.position + camData.front, camData.worldUp);
+        shader.setMat4("debugView", debugView);
+
+		//glViewport(50, 50, 800, 600);
+		shader.setVec4("debugColor", glm::vec4(0.8f, 0.2f, 0.2f, 0.5f));
+		shader.setVec4("normalCamColor", glm::vec4(0.2f, 0.8f, 0.2f, 0.5f));
+        shader.setBool("useDebugCam", useDebugCam);
+        chunkManager.Render(shader);
+        //squirrel.Draw(shader);
 
 
         // 32x32x32 big cube
@@ -419,6 +431,14 @@ void ImGuiRenderLoop()
         useWireframe = !useWireframe;
     }
 
+    ImGui::Text("Debug Cam Position: (%f, %f, %f)", camData.position.x, camData.position.y, camData.position.z);
+    ImGui::Text("Debug Cam Front (%f, %f, %f)", camData.front.x, camData.front.y, camData.front.z);
+    ImGui::SliderInt3("Block To Remove", debugBlockPos, 0, 32);
+    if (ImGui::Button("Remove Block"))
+    {
+        chunkManager.RemoveBlock(debugBlockPos[0], debugBlockPos[1], debugBlockPos[2]);
+    }
+
     ImGui::End();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -459,6 +479,10 @@ void processInput(GLFWwindow *window)
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     ImGuiIO& io = ImGui::GetIO();
+    if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+    {
+        io.AddMouseButtonEvent(1, true);
+    }
 
     if (io.WantCaptureKeyboard) return;
 
@@ -476,6 +500,14 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             io.WantCaptureMouse = false;
             camera.EnableMovement();
         }
+    }
+    if (key == GLFW_KEY_SLASH && action == GLFW_PRESS)
+    {
+		camData.position = camera.Position;
+		camData.front = camera.Front;
+		camData.worldUp = camera.WorldUp;
+		camData.zoom = camera.Zoom;
+        useDebugCam = !useDebugCam;
     }
 }
 
@@ -525,108 +557,6 @@ void updateDeltaTime()
     lastFrame = currentFrame;
 }
 
-//Mesh createMesh()
-//{
-//    std::vector<Vertex> vertices;
-//    // face 1, annotated as face 1 vertex 1, face 1 vertex 2, etc
-//    // position vec3 | normal vec3 | texcoord vec2
-//    Vertex f1v1{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(0.0f, 0.0f)};
-//    Vertex f1v2{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(1.0f, 0.0f)};
-//    Vertex f1v3{ glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f1v4{ glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f1v5{ glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(0.0f, 1.0f)};
-//    Vertex f1v6{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec2(0.0f, 0.0f)};
-//
-//    Vertex f2v1{ glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 0.0f)};
-//    Vertex f2v2{ glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 0.0f)};
-//    Vertex f2v3{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f2v4{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f2v5{ glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 1.0f)};
-//    Vertex f2v6{ glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 0.0f)};
-//    
-//    Vertex f3v1{ glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//    Vertex f3v2{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 0.0f)};
-//    Vertex f3v3{ glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f3v4{ glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f3v5{ glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 1.0f)};
-//    Vertex f3v6{ glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//
-//    Vertex f4v1{ glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//    Vertex f4v2{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 0.0f)};
-//    Vertex f4v3{ glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f4v4{ glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f4v5{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 1.0f)};
-//    Vertex f4v6{ glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//
-//    Vertex f5v1{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//    Vertex f5v2{ glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 0.0f)};
-//    Vertex f5v3{ glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f5v4{ glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f5v5{ glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 1.0f)};
-//    Vertex f5v6{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//
-//    Vertex f6v1{ glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//    Vertex f6v2{ glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(1.0f, 0.0f)};
-//    Vertex f6v3{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f6v4{ glm::vec3(1.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(1.0f, 1.0f)};
-//    Vertex f6v5{ glm::vec3(0.0f, 1.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(0.0f, 1.0f)};
-//    Vertex f6v6{ glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec2(0.0f, 0.0f)};
-//
-//    vertices.push_back(f1v1);
-//    vertices.push_back(f1v2);
-//    vertices.push_back(f1v3);
-//    vertices.push_back(f1v4);
-//    vertices.push_back(f1v5);
-//    vertices.push_back(f1v6);
-//
-//    vertices.push_back(f2v1);
-//    vertices.push_back(f2v2);
-//    vertices.push_back(f2v3);
-//    vertices.push_back(f2v4);
-//    vertices.push_back(f2v5);
-//    vertices.push_back(f2v6);
-//
-//    vertices.push_back(f3v1);
-//    vertices.push_back(f3v2);
-//    vertices.push_back(f3v3);
-//    vertices.push_back(f3v4);
-//    vertices.push_back(f3v5);
-//    vertices.push_back(f3v6);
-//
-//    vertices.push_back(f4v1);
-//    vertices.push_back(f4v2);
-//    vertices.push_back(f4v3);
-//    vertices.push_back(f4v4);
-//    vertices.push_back(f4v5);
-//    vertices.push_back(f4v6);
-//
-//    vertices.push_back(f5v1);
-//    vertices.push_back(f5v2);
-//    vertices.push_back(f5v3);
-//    vertices.push_back(f5v4);
-//    vertices.push_back(f1v5);
-//    vertices.push_back(f5v6);
-//
-//    vertices.push_back(f6v1);
-//    vertices.push_back(f6v2);
-//    vertices.push_back(f6v3);
-//    vertices.push_back(f6v4);
-//    vertices.push_back(f6v5);
-//    vertices.push_back(f6v6);
-//
-//    std::vector<unsigned int> indices;
-//    for (int i = 0; i < 24; i++)
-//		indices.push_back(i);
-//
-//    std::vector<Texture> texs;
-//    Texture diffuse;
-//    diffuse.id = textures[0];
-//    std::cout << " diffuse id: " << diffuse.id << std::endl;
-//    diffuse.type = "texture_diffuse";
-//    texs.push_back(diffuse);
-//
-//    return Mesh(vertices, indices, texs);
-//}
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
@@ -667,7 +597,10 @@ void setup_window(GLFWwindow *&window, unsigned int screenWidth, unsigned int sc
 void setShaderData(Shader& shader)
 {
     shader.use();
-    shader.setVec3("viewPos", camera.Position);
+    shader.setVec3("viewPos", camData.position);
+    shader.setBool("useDirectionalLight", true);
+    shader.setBool("usePointlights", false);
+    shader.setBool("useSpotLight", false);
 
     shader.setVec3("dirLight.direction", shaderData.dirLightDirection);
     shader.setVec3("dirLight.ambient", 0.05f, 0.05f, 0.05f);
@@ -709,8 +642,8 @@ void setShaderData(Shader& shader)
     shader.setFloat("pointLights[3].linear", 0.09f);
     shader.setFloat("pointLights[3].quadratic", 0.032f);
 
-    shader.setVec3("spotLight.position", camera.Position);
-    shader.setVec3("spotLight.direction", camera.Front);
+    shader.setVec3("spotLight.position", camData.position);
+    shader.setVec3("spotLight.direction", camData.front);
     shader.setVec3("spotLight.ambient", 0.0f, 0.0f, 0.0f);
     shader.setVec3("spotLight.diffuse", 1.0f, 1.0f, 1.0f);
     shader.setVec3("spotLight.specular", 0.3f, 0.3f, 0.3f);

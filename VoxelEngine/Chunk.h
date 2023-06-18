@@ -16,16 +16,24 @@ struct Vertex
 class Chunk
 {
 public:
-	unsigned int m_meshVAO, m_meshVBO;
 	static const int CHUNK_SIZE = 32; // temporarily just CHUNK_SIZE^3 big
+	unsigned int m_meshVAO, m_meshVBO;
+	glm::ivec2 m_position;
+	//Block m_blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
+	Block* m_blocks;
 
-	Chunk();
+	Chunk(glm::ivec2& position);
+	Chunk(int xPos, int yPos);
+	Chunk(const Chunk& chunk);
 	~Chunk();
     void CreateMesh();
-	void Update(float dt);
 	void Render(Shader& shader);
+	Block& GetBlock(int x, int y, int z) const ;
+	void AddBlock(glm::ivec3 position);
+	void AddBlock(int x, int y, int z);
+	void RemoveBlock(glm::ivec3 position);
+	void RemoveBlock(int x, int y, int z);
 private:
-	Block*** m_pBlocks;
 	unsigned int m_pNumVertices;
 	void CreateCube(glm::ivec3& position, std::vector<Vertex>& vertices);
 

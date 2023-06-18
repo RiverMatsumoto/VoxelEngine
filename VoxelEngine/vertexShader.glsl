@@ -12,12 +12,17 @@ out vec2 TexCoords;
 out vec3 Normal;
 out vec3 FragPos;
 out vec3 LightPos;
+out vec3 vertexPos;
+
+out vec4 debugClipPosition;
+bool isWithinClipSpace;
 
 uniform vec3 lightPos;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
+uniform mat4 debugView;
 
 void main()
 {
@@ -31,5 +36,7 @@ void main()
 
 	TexCoords = aTexCoord;
 
+	debugClipPosition = projection * debugView * model * vec4(aPos, 1.0);
 	gl_Position = projection * view * model * vec4(aPos, 1.0);
+	vertexPos = debugClipPosition.xyz;
 }

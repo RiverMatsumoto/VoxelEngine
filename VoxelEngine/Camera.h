@@ -23,7 +23,6 @@ class Camera
 {
 public:
 	// camera attributes
-	glm::vec3 tempPos;
 	glm::vec3 Position;
 	glm::vec3 Front;
 	glm::vec3 Up;
@@ -52,7 +51,7 @@ public:
 		Zoom(ZOOM)
 	{
 		Position = position;
-		WorldUp = -up;
+		WorldUp = up;
 		Yaw = yaw;
 		Pitch = pitch;
 		firstMouse = true;
@@ -64,7 +63,7 @@ public:
 		: Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 	{
 		Position = glm::vec3(posX, posY, posZ);
-		WorldUp = -glm::vec3(upX, upY, upZ);
+		WorldUp = glm::vec3(upX, upY, upZ);
 		Yaw = yaw;
 		Pitch = pitch;
 		updateCameraVectors();

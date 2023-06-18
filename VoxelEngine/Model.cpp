@@ -33,6 +33,7 @@ Model::Model(std::string const& path, bool gamma)
 // draws the model, and thus all its meshes
 void Model::Draw(Shader& shader)
 {
+
     for (unsigned int i = 0; i < meshes.size(); i++)
         meshes[i].Draw(shader);
 }
@@ -78,14 +79,14 @@ void Model::processNode(aiNode* node, const aiScene* scene)
 Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 {
     // data to fill
-    std::vector<Vertex> vertices;
+    std::vector<ModelVertex> vertices;
     std::vector<unsigned int> indices;
     std::vector<Texture> textures;
 
     // walk through each of the mesh's vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
-        Vertex vertex;
+        ModelVertex vertex;
         glm::vec3 vector; // we declare a placeholder vector since assimp uses its own vector class that doesn't directly convert to glm's vec3 class so we transfer the data to this placeholder glm::vec3 first.
         // positions
         vector.x = mesh->mVertices[i].x;
@@ -201,7 +202,7 @@ unsigned int TextureFromFile(const char* path, const std::string& directory, boo
     glGenTextures(1, &textureID);
 
     int width, height, nrComponents;
-    stbi_set_flip_vertically_on_load(true);
+    //stbi_set_flip_vertically_on_load(true);
     unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
     if (data)
     {
