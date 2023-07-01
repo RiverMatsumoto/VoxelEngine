@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/intersect.hpp>
 
 #include "Shader.h"
 #include "stb_image.h"
@@ -16,6 +17,7 @@
 #include <filesystem>
 #include <iostream>
 #include <vector>
+#include <chrono>
 #include "Chunk.h"
 #include "ChunkManager.h"
 #include <PerlinNoise.hpp>
@@ -41,6 +43,7 @@ void mouse_btn_callback(GLFWwindow *window, int button, int action, int mods);
 
 // util
 void updateDeltaTime();
+void SelectBlock(glm::mat4 projection, glm::mat4 view);
 
 //Mesh createMesh();
 
@@ -48,6 +51,7 @@ Camera camera(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 
 unsigned int screenWidth = 1600;
 unsigned int screenHeight = 1200;
+glm::vec3 selectedBlock(0.0f);
 
 float deltaTime = (float) glfwGetTime();
 float lastFrame = (float) glfwGetTime();
@@ -85,7 +89,13 @@ int main()
 {
     GLFWwindow *window{};
     setup_window(window, screenWidth, screenHeight);
-    SetupImGui(window);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetMouseButtonCallback(window, mouse_btn_callback);
+
 
     const char *vertexPath = "C:\\Users\\river\\source\\repos\\VoxelEngine\\VoxelEngine\\vertexShader.glsl";
     const char *fragmentPath = "C:\\Users\\river\\source\\repos\\VoxelEngine\\VoxelEngine\\fragmentShader.glsl";
@@ -120,11 +130,6 @@ int main()
     unsigned int VBOs[10], VAOs[10], EBOs[10];
     generateCube(VBOs, VAOs, EBOs);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window, mouse_callback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetMouseButtonCallback(window, mouse_btn_callback);
 
 
     // positions all containers
@@ -142,17 +147,19 @@ int main()
     };
     
     //Mesh myMesh = createMesh();
-    chunkManager.BuildAllChunks();
+    chunkManager.InitializeAllChunks();
+    SetupImGui(window);
 
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
-    glEnable(GL_STENCIL_TEST);
-    glStencilFunc(GL_EQUAL, 1, 0x50);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+    glEnable(GL_LINE_SMOOTH);
+    glLineWidth(4.0f);
 
 	//std::string squirrelPath("C:/Users/river/source/repos/VoxelEngine/VoxelEngine/resources/objects/squirrel/Squirrel_OBJ.obj");
 	//Model squirrel(squirrelPath);
-    
+
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -178,6 +185,11 @@ int main()
                                         0.0f, 0.0f, 1.0f, 0.0f,
                                         0.0f, 0.0f, 0.0f, 1.0f);
 
+        
+        auto start = std::chrono::high_resolution_clock::now();
+        SelectBlock(projection, view);
+        auto finish = std::chrono::high_resolution_clock::now();
+        std::cout << "For selecting: " << (finish - start) << std::endl;
 
         // rendering
         shader.use();
@@ -190,12 +202,10 @@ int main()
 		glm::mat4 debugView = glm::lookAt(camData.position, camData.position + camData.front, camData.worldUp);
         shader.setMat4("debugView", debugView);
 
-		//glViewport(50, 50, 800, 600);
 		shader.setVec4("debugColor", glm::vec4(0.8f, 0.2f, 0.2f, 0.5f));
 		shader.setVec4("normalCamColor", glm::vec4(0.2f, 0.8f, 0.2f, 0.5f));
         shader.setBool("useDebugCam", useDebugCam);
         chunkManager.Render(shader);
-        //squirrel.Draw(shader);
 
 
         // 32x32x32 big cube
@@ -253,6 +263,123 @@ int main()
     return 0;
 }
 
+struct cube
+{
+    glm::vec3 v0;
+    glm::vec3 v1;
+    glm::vec3 v2;
+    glm::vec3 v3;
+    glm::vec3 v4;
+    glm::vec3 v5;
+    glm::vec3 v6;
+    glm::vec3 v7;
+};
+
+void printVec3(glm::vec3 v)
+{
+    printf("(%f, %f, %f)\n", v.x, v.y, v.z);
+}
+
+void SelectBlock(glm::mat4 projection, glm::mat4 view)
+{
+	// raycast
+	glm::vec3 raycastPos = camera.Position;
+	glm::vec3 ray_nds = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec4 ray_clip = glm::vec4(ray_nds.x, ray_nds.y, 1.0f, 1.0);
+	glm::vec4 ray_eye = glm::inverse(projection) * ray_clip;
+	ray_eye = glm::vec4(ray_eye.x, ray_eye.y, -1.0, 0.0f);
+	glm::vec4 ray_world = glm::vec4(glm::inverse(view) * ray_eye);
+	glm::vec3 ray_dir(ray_world.x, ray_world.y, ray_world.z);//ray_world = glm::vec4(ray_world.x, ray_world.y, ray_world.z, 0.0f);
+	ray_world = glm::normalize(ray_world);
+	glm::vec3 ray_origin = camera.Position;
+	float planeDistance = 1.0f;
+	glm::vec3 planeOrig(0.0f);
+	glm::vec3 planeNormal(0.0f, 1.0f, 0.0f);
+	glm::vec2 baryPosition(0.0f,0.0f);
+	//bool intersects = glm::intersectRayPlane(ray_origin, ray_dir, planeOrig, planeNormal, intersectionDistance);
+	glm::vec3 pos = camera.Position;
+
+
+    std::vector<cube> blocksToCheck;
+    int distance = 4;
+    for (int x = -distance; x < distance; x++)
+    {
+        for (int y = -distance; y < distance; y++)
+        {
+            for (int z = -distance; z < distance; z++)
+            {
+                cube block;
+                block.v0 = glm::vec3((int)(pos.x + x)       , (int)(pos.y + y    ) , (int)(pos.z + z    ));
+                if (chunkManager.IsBlockActive(block.v0.x, block.v0.y, block.v0.z))
+                {
+					block.v1 = glm::vec3((int)(pos.x + x + 1)   , (int)(pos.y + y    ) , (int)(pos.z + z    ));
+					block.v2 = glm::vec3((int)(pos.x + x + 1)   , (int)(pos.y + y + 1) , (int)(pos.z + z    ));
+					block.v3 = glm::vec3((int)(pos.x + x)       , (int)(pos.y + y + 1) , (int)(pos.z + z    ));
+					block.v4 = glm::vec3((int)(pos.x + x)       , (int)(pos.y + y    ) , (int)(pos.z + z + 1));
+					block.v5 = glm::vec3((int)(pos.x + x + 1)   , (int)(pos.y + y    ) , (int)(pos.z + z + 1));
+					block.v6 = glm::vec3((int)(pos.x + x + 1)   , (int)(pos.y + y + 1) , (int)(pos.z + z + 1));
+					block.v7 = glm::vec3((int)(pos.x + x)       , (int)(pos.y + y + 1) , (int)(pos.z + z + 1));
+					blocksToCheck.push_back(block);
+                }
+            }
+        }
+    }
+    std::vector<cube>::iterator ptr;
+    std::vector<float> distances;
+    std::vector<glm::ivec3> blockPositions;
+    for (ptr = blocksToCheck.begin(); ptr < blocksToCheck.end(); ptr++)
+    {
+        /*
+            indices visual
+                forward
+              7 --- 6
+             /|    /|
+    left	3 --- 2 | right
+            | 4 --| 5
+            |/    |/
+            0 --- 1
+            back
+        */
+        // check if any of the faces intersect
+        float distanceToTriangle = 10.0f;
+        glm::vec2 baryPosition(0.0f);
+        if (glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v0, ptr->v1, ptr->v2, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v2, ptr->v3, ptr->v0, baryPosition, distanceToTriangle) || 
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v4, ptr->v5, ptr->v6, baryPosition, distanceToTriangle) || 
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v6, ptr->v7, ptr->v4, baryPosition, distanceToTriangle) || 
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v4, ptr->v0, ptr->v3, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v3, ptr->v7, ptr->v4, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v1, ptr->v5, ptr->v6, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v6, ptr->v2, ptr->v1, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v4, ptr->v5, ptr->v1, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v1, ptr->v0, ptr->v4, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v3, ptr->v2, ptr->v6, baryPosition, distanceToTriangle) ||
+            glm::intersectRayTriangle(ray_origin, ray_dir, ptr->v6, ptr->v7, ptr->v3, baryPosition, distanceToTriangle))
+        {
+            if (distanceToTriangle < distance && distanceToTriangle > 0)
+            {
+                blockPositions.push_back(ptr->v0);
+                distances.push_back(distanceToTriangle);
+            }
+        }
+    }
+
+    float minDistance = INFINITY;
+    int minIndex = -1;
+    for (int i = 0; i < blockPositions.size(); i++)
+    {
+        if (chunkManager.IsBlockActive(blockPositions[i].x, blockPositions[i].y, blockPositions[i].z))
+        {
+			//printf("(%d,%d,%d)\n", blockPositions[i].x, blockPositions[i].y, blockPositions[i].z);
+            if (minDistance > distances[i])
+            {
+                minIndex = i;
+                minDistance = distances[i];
+				selectedBlock = blockPositions[i];
+            }
+        }
+    }
+}
 
 void generateCube(unsigned int VBO[], unsigned int VAO[], unsigned int EBO[])
 {
@@ -433,7 +560,7 @@ void ImGuiRenderLoop()
 
     ImGui::Text("Debug Cam Position: (%f, %f, %f)", camData.position.x, camData.position.y, camData.position.z);
     ImGui::Text("Debug Cam Front (%f, %f, %f)", camData.front.x, camData.front.y, camData.front.z);
-    ImGui::SliderInt3("Block To Remove", debugBlockPos, 0, 32);
+    ImGui::SliderInt3("Block To Remove", debugBlockPos, 0, 32 * 4);
     if (ImGui::Button("Remove Block"))
     {
         chunkManager.RemoveBlock(debugBlockPos[0], debugBlockPos[1], debugBlockPos[2]);
@@ -459,7 +586,6 @@ void SetupImGui(GLFWwindow *window)
 void processInput(GLFWwindow *window)
 {
     ImGuiIO& io = ImGui::GetIO();
-
     if (io.WantCaptureKeyboard) return;
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -479,11 +605,6 @@ void processInput(GLFWwindow *window)
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     ImGuiIO& io = ImGui::GetIO();
-    if (key == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-    {
-        io.AddMouseButtonEvent(1, true);
-    }
-
     if (io.WantCaptureKeyboard) return;
 
     if (key == GLFW_KEY_TAB && action == GLFW_PRESS)
@@ -546,7 +667,7 @@ void mouse_btn_callback(GLFWwindow *window, int button, int action, int mods)
 
     if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS)
     {
-
+        chunkManager.RemoveBlock(selectedBlock);
     }
 }
 

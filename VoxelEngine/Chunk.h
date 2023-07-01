@@ -17,9 +17,10 @@ class Chunk
 {
 public:
 	static const int CHUNK_SIZE = 32; // temporarily just CHUNK_SIZE^3 big
+	static const int CHUNK_SIZE_SQUARED = 1024; // temporarily just CHUNK_SIZE^3 big
+	static const int CHUNK_SIZE_CUBED = 32768; // temporarily just CHUNK_SIZE^3 big
 	unsigned int m_meshVAO, m_meshVBO;
 	glm::ivec2 m_position;
-	//Block m_blocks[CHUNK_SIZE][CHUNK_SIZE][CHUNK_SIZE];
 	Block* m_blocks;
 
 	Chunk(glm::ivec2& position);
@@ -27,8 +28,9 @@ public:
 	Chunk(const Chunk& chunk);
 	~Chunk();
     void CreateMesh();
+	void ApplyHeightMap(unsigned int seed);
 	void Render(Shader& shader);
-	Block& GetBlock(int x, int y, int z) const ;
+	Block* GetBlock(int x, int y, int z) const ;
 	void AddBlock(glm::ivec3 position);
 	void AddBlock(int x, int y, int z);
 	void RemoveBlock(glm::ivec3 position);
